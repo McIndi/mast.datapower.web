@@ -9,7 +9,7 @@ class Plugin(threading.Thread):
     def __init__(self):
         """Plugin is a SubClass of threading.Thread and is responsible for serving
         the Web GUI over https on the configured port"""
-        logger = make_logger("web")
+        logger = make_logger("mast.datapower.web")
         logger.debug("Initializing mastd.web plugin.")
         super(Plugin, self).__init__()
         self.daemon = True
