@@ -147,13 +147,14 @@ def get_json_config(_file):
 
 @app.route('/test/connectivity/<hostname>')
 def check_connectivity(hostname):
+    
     resp = {}
     credentials = flask.request.args.get("credentials")
     credentials = xordecode(
         credentials,
         key=xorencode(flask.request.cookies["9x4h/mmek/j.ahba.ckhafn"]))
-    # check_hostname = flask.request.args.get("check_hostname", False)
-    appl = datapower.DataPower(hostname, credentials, check_hostname=False)
+    check_hostname = flask.request.args.get("check_hostname", True)
+    appl = datapower.DataPower(hostname, credentials, check_hostname=check_hostname)
     resp["soma"] = appl.is_reachable()
     if "Authentication failure" in appl.last_response:
         resp["soma"] = False
@@ -252,6 +253,18 @@ def list_environment(name):
         return flask.jsonify({'appliances': [name]})
     return flask.jsonify({'appliances': get_appliances(name)})
 
+
+@app.before_request
+def log_access():
+    r = flask.request
+    logger = make_logger("mast.web.access")
+    logger.info("method: {}, url: {}, client: {}".format(
+        r.method,
+        r.url,
+        r.remote_addr))
+    logger.debug("data: {}, headers: {}".format(
+        r.data,
+        str(r.headers).replace("\n", "; ")))
 
 with app.app_context():
     flask.current_app.PLUGINS = initialize_plugins()
