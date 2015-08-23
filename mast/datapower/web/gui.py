@@ -147,13 +147,14 @@ def get_json_config(_file):
 
 @app.route('/test/connectivity/<hostname>')
 def check_connectivity(hostname):
-    
     resp = {}
     credentials = flask.request.args.get("credentials")
     credentials = xordecode(
         credentials,
         key=xorencode(flask.request.cookies["9x4h/mmek/j.ahba.ckhafn"]))
     check_hostname = flask.request.args.get("check_hostname", True)
+    check_hostname = False if "false" in check_hostname else check_hostname
+    logger.debug("Check Hostname: {}".format(str(check_hostname)))
     appl = datapower.DataPower(hostname, credentials, check_hostname=check_hostname)
     resp["soma"] = appl.is_reachable()
     if "Authentication failure" in appl.last_response:
