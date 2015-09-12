@@ -90,59 +90,43 @@ def initialize_plugins():
         'tabs': ''}
 
     for name, cls in sorted(plugins_dict.items()):
-        logger.debug("Initializing web plugin {}".format(name))
         _plugin = cls()
         plugins[name] = _plugin
 
-        # Get html
-        logger.debug("Gathering html for plugin {}".format(name))
-        plugins["html"] += flask.Markup(_plugin.html())
-
-        # Get tab html
-        logger.debug("generating tab html for plugin {}".format(name))
-        plugins["tabs"] += flask.Markup('<li><a href="#mast.datapower.{0}">{0}</a></li>'.format(name))
-
-        # Get css
-        logger.debug("Gathering css for plugin {}".format(name))
-        plugins["css"] += flask.Markup(_plugin.css())
-
-        # Get js
-        logger.debug("Gathering javascript for plugin {}".format(name))
-        plugins["js"] += flask.Markup(_plugin.js())
-
+        try:
+            plugins["html"] += flask.Markup(_plugin.html())
+            plugins["tabs"] += flask.Markup(
+                '<li><a href="#mast.datapower.{0}">{0}</a></li>'.format(name))
+            plugins["css"] += flask.Markup(_plugin.css())
+            plugins["js"] += flask.Markup(_plugin.js())
+        except:
+            logger.exception(
+                "An unhandled exception occured while attempting "
+                "to gather the content for web plugin {}".format(name))
+            raise
         # Route function
-        logger.debug("adding route for plugin {}".format(name))
-        app.add_url_rule(
-            '/%s' % (name),
-            view_func=_plugin.route,
-            methods=["GET", "POST", "DELETE", "PUT"])
-    logger.info("Finished collecting web plugins")
+        try:
+            app.add_url_rule(
+                '/%s' % (name),
+                view_func=_plugin.route,
+                methods=["GET", "POST", "DELETE", "PUT"])
+        except:
+            logger.exception(
+                "An unhandled exception occured while attempting "
+                "to assign a handler for web plugin {}".format(name))
+            raise
+
     return plugins
 
 
 @app.route('/config/<_file>')
 def get_json_config(_file):
-    """Given directory dir parse and convert to JSON dir/plugin.conf"""
-    from mast.config import get_configs_dict
+    """return merged confiuration from `$MAST_HOME/etc/default/_file`
+    and `$MAST_HOME/etc/local/_file` in json format"""
     _file = _file if _file.endswith(".conf") else "{}.conf".format(_file)
-    logger.info("attempting to retrieve file {}".format(_file))
 
     config = get_configs_dict()[_file]
-    logger.info("Retrieved config: {}".format(json.dumps(config)))
     return flask.jsonify(config)
-
-#    import ConfigParser
-#    global plugin_dir
-#
-#    config = ConfigParser.SafeConfigParser()
-#    config.read(os.path.join(plugin_dir, dir, 'plugin.conf'))
-#
-#    ret = {}
-#    for section in config.sections():
-#        ret[section] = {}
-#        for option in config.options(section):
-#            ret[section][option] = config.get(section, option)
-#    return flask.jsonify(ret)
 
 
 @app.route('/test/connectivity/<hostname>')
@@ -154,7 +138,7 @@ def check_connectivity(hostname):
         key=xorencode(flask.request.cookies["9x4h/mmek/j.ahba.ckhafn"]))
     check_hostname = flask.request.args.get("check_hostname", True)
     check_hostname = False if "false" in check_hostname else check_hostname
-    logger.debug("Check Hostname: {}".format(str(check_hostname)))
+
     appl = datapower.DataPower(hostname, credentials, check_hostname=check_hostname)
     resp["soma"] = appl.is_reachable()
     if "Authentication failure" in appl.last_response:
@@ -276,10 +260,8 @@ def main():
     logger.debug("Running as user {}".format(getpass.getuser()))
     logger.debug("Running in directory {}".format(os.getcwd()))
 
-    logger.debug("grafting app to tree")
     cherrypy.tree.graft(app, '/')
 
-    logger.debug("Configuring CherryPy")
     # Set the configuration of the web server
     cherrypy.config.update({
         'engine.autoreload.on': False,
@@ -299,23 +281,21 @@ def main():
 
     # Start the CherryPy WSGI web server
     try:
-        logger.debug("Finding CherryPy Engine")
         engine = cherrypy.engine
         engine.signal_handler.subscribe()
         if hasattr(engine, "console_control_handler"):
             engine.console_control_handler.subscribe()
-        logger.debug("Starting CherryPy")
+
         cherrypy.engine.start()
         cherrypy.engine.block()
-        logger.debug("CherryPy stopped")
     except KeyboardInterrupt:
         cherrypy.engine.exit()
     except:
-        logger.exception("Sorry, an unhandled exception occurred while starting CherryPy")
+        logger.exception(
+            "Sorry, an unhandled exception occurred while starting CherryPy")
 
 
 def stop_server():
-    logger.debug("Stopping CherryPy")
     cherrypy.engine.exit()
 
 if __name__ == "__main__":
