@@ -286,6 +286,8 @@ def main():
         if hasattr(engine, "console_control_handler"):
             engine.console_control_handler.subscribe()
 
+        print "MAST Web listening on {}:{}".format(host, port)
+
         cherrypy.engine.start()
         cherrypy.engine.block()
     except KeyboardInterrupt:
