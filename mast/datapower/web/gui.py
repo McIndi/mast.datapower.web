@@ -46,6 +46,9 @@ cert, key = None, None
 if secure:
     key = config["server"]["key"]
     cert = config["server"]["cert"]
+    cacert = None
+    if "cacert" in config["server"]:
+        cacert = config["server"]["cacert"]
 
 # TODO: Move config option gathering closer to here
 app = flask.Flask(
@@ -277,7 +280,7 @@ def main():
         CherryPyWSGIServer.ssl_adapter = BuiltinSSLAdapter(
             cert,
             key,
-            None)
+            cacert)
 
     # Start the CherryPy WSGI web server
     try:
