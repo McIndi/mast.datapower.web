@@ -1,9 +1,8 @@
 from cStringIO import StringIO
 from mast.timestamp import Timestamp
-import mast.datapower.datapower as datapower
+from mast.datapower import datapower
 import pkg_resources
-from mast.datapower.datapower import DataPower
-from mast.datapower.datapower import Environment, is_environment, get_appliances
+from mast.datapower.datapower import is_environment, get_appliances
 from mast.xor import xordecode, xorencode
 from mast.config import get_configs_dict
 from urllib2 import unquote
@@ -68,10 +67,10 @@ wzl.addHandler(file_handler)
 
 app.debug = debug
 
-logger = make_logger("gui")
 
 def initialize_plugins():
     """Initializes all of the plugins for the MAST web GUI"""
+    logger = make_logger("gui")
     logger.debug("Running as user {}".format(getpass.getuser()))
     logger.debug("Running in directory {}".format(os.getcwd()))
     logger.debug("Attempting to retrieve list of web plugins")
@@ -142,7 +141,10 @@ def check_connectivity(hostname):
     check_hostname = flask.request.args.get("check_hostname", True)
     check_hostname = False if "false" in check_hostname else check_hostname
 
-    appl = datapower.DataPower(hostname, credentials, check_hostname=check_hostname)
+    appl = datapower.DataPower(
+        hostname,
+        credentials,
+        check_hostname=check_hostname)
     resp["soma"] = appl.is_reachable()
     if "Authentication failure" in appl.last_response:
         resp["soma"] = False
