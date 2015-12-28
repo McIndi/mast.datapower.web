@@ -69,7 +69,18 @@ app.debug = debug
 
 
 def initialize_plugins():
-    """Initializes all of the plugins for the MAST web GUI"""
+    """
+    _function_: `mast.datapower.web.initialize_plugins()`
+
+    Initializes all of the plugins for the MAST web GUI
+
+    Logs to: `gui.log`
+
+    Parameters:
+
+    This function accepts no arguments.
+
+    """
     logger = make_logger("gui")
     logger.debug("Running as user {}".format(getpass.getuser()))
     logger.debug("Running in directory {}".format(os.getcwd()))
@@ -123,8 +134,20 @@ def initialize_plugins():
 
 @app.route('/config/<_file>')
 def get_json_config(_file):
-    """return merged confiuration from `$MAST_HOME/etc/default/_file`
-    and `$MAST_HOME/etc/local/_file` in json format"""
+    """
+    _function_: `mast.datapower.web.get_json_config(_file)`
+
+    return merged confiuration from `$MAST_HOME/etc/default/_file`
+    and `$MAST_HOME/etc/local/_file` in json format this is used to
+    allow `mast_web` plugins to have configuration within MAST's
+    unified configuration system.
+
+    Exposed at: `/config/_file` via GET
+
+    Parameters:
+
+    * `_file`: The name of the configuration file to parse and return.
+    """
     _file = _file if _file.endswith(".conf") else "{}.conf".format(_file)
 
     config = get_configs_dict()[_file]
@@ -133,6 +156,20 @@ def get_json_config(_file):
 
 @app.route('/test/connectivity/<hostname>')
 def check_connectivity(hostname):
+    """
+    _function_: `mast.datapower.web.check_connectivity(hostname)`
+
+    This function will return a JSON response to a GET request containing the
+    hostname and credentials (encrypted). The response will be a mapping
+    of hostname to boolean value indicating whether or not we were able
+    to reach the appliance using the hostname and credentials.
+
+    Exposed at: `/test/connectivity` via GET
+
+    Parameters:
+
+    * `hostname`: The hostname of the appliance to connect to.
+    """
     resp = {}
     credentials = flask.request.args.get("credentials")
     credentials = xordecode(
@@ -159,7 +196,17 @@ def check_connectivity(hostname):
 
 @app.route('/')
 def index():
-    """Render index.html"""
+    """
+    _function_: `mast.datapower.web.index()`
+
+    Renders index.html
+
+    Exposed at: `/` via GET
+
+    Parameters:
+
+    This function accepts no arguments.
+    """
     global PLUGINS
     random.seed()
     flask.session["csrf"] = random.randint(100000, 999999)
@@ -179,8 +226,19 @@ def index():
 
 @app.route('/upload', methods=["POST"])
 def upload():
-    """This handles uploads of files, stores them in a temporary directory,
-    and returns the path and filename in JSON format"""
+    """
+    _function_: `mast.datapower.web.upload()`
+
+    This handles uploads of files, stores them in a temporary directory,
+    and returns the path and filename in JSON format
+
+    Exposed at: `/upload` via POST
+
+    Parameters:
+
+    This function does not accept any arguments, but does require a
+    POST body to be present in the request.
+    """
     global upload_dir
     UPLOAD_DIRECTORY = upload_dir
     t = Timestamp()
@@ -196,6 +254,19 @@ def upload():
 
 @app.route('/download_history', methods=["POST"])
 def download_history():
+    """
+    _function_: `mast.datapower.web.download_history()`
+
+    This function is Allows users to download a history of the requests
+    and responses made to the SOMA interface.
+
+    Exposed at: `/download_history` via POST
+
+    Parameters:
+
+    This function accepts no arguments, but does require a POST body to
+    be present in the request.
+    """
     _id = flask.request.form.get("id")
     ts = _id.split("-")[0]
     filename = os.path.join(
@@ -214,6 +285,25 @@ def download_history():
 
 @app.route('/download', methods=["GET", "POST"])
 def download():
+    """
+    _function_: `mast.datapower.web.download()`
+
+    This function is used to allow users to download ssh-transcripts.
+
+    This function will accept a form POST with two fields:
+
+    1. `hostname`: The hostname of the appliance for which the transcript
+    was generated. This is only used for creating the filename.
+    2. `content`: This is the content of the transcript and will be returned
+    as a download for the user.
+
+    Exposed at: `/download` via POST
+
+    Parameters:
+
+    This function accepts no arguments, but it does require a POST body
+    to be present in the request.
+    """
     # This needs to be more universal. This is currently only useful for
     # ssh transcripts. This should allow any relevant file to be downloaded.
     if flask.request.method == "POST":
@@ -237,8 +327,18 @@ def download():
 
 @app.route('/environments/<name>')
 def list_environment(name):
-    """Return a JSON response of the appliances in environment name.
-    If name is not an environment then return name."""
+    """
+    _function_: `mast.datapower.web.list_environment(name)`
+
+    Return a JSON response of the appliances in environment name.
+    If name is not an environment then return name.
+
+    exposed at: `/environments/<name>` via GET
+
+    Parameters:
+
+    * `name`: The name of the environment to list.
+    """
     if not is_environment(name):
         return flask.jsonify({'appliances': [name]})
     return flask.jsonify({'appliances': get_appliances(name)})
@@ -246,6 +346,18 @@ def list_environment(name):
 
 @app.before_request
 def log_access():
+    """
+    _function_: `mast.datapower.web.log_access()`
+
+    This function logs information about each request received.
+
+    Logs To: `mast.web.access.log`
+
+    Parameters:
+
+    This function accepts no arguments.
+
+    """
     r = flask.request
     logger = make_logger("mast.web.access")
     logger.info("method: {}, url: {}, client: {}".format(
@@ -261,6 +373,19 @@ with app.app_context():
 
 
 def main():
+    """
+    _function_: `mast.datapower.web.main()`
+
+    This is the main function which will spin up a server listening
+    to the configured port and block until a SIGTERM or equivalent
+    (Ctrl + C) is received at which point it will quit.
+
+    Logs to: `gui.main.log`
+
+    Parameters:
+
+    This function does not accept any arguments.
+    """
     logger = make_logger("gui.main")
     logger.debug("Running as user {}".format(getpass.getuser()))
     logger.debug("Running in directory {}".format(os.getcwd()))
