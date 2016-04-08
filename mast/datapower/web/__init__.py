@@ -15,7 +15,9 @@ screen.
 import threading
 from mast.logging import make_logger
 from gui import *
+import os
 
+__version__ = "{}-0".format(os.environ["MAST_VERSION"])
 
 class Plugin(threading.Thread):
     """
