@@ -8,8 +8,8 @@ from mast.config import get_configs_dict
 from urllib2 import unquote
 from mast.logging import make_logger
 import cherrypy
-from cherrypy.wsgiserver.ssl_builtin import BuiltinSSLAdapter
-from cherrypy.wsgiserver import CherryPyWSGIServer
+from cheroot.ssl.builtin import BuiltinSSLAdapter
+from cheroot.wsgi import WSGIServer
 import logging
 import random
 import string
@@ -404,7 +404,7 @@ def main():
     if secure:
         logger.debug("Configuring TLS")
         cherrypy.server.ssl_module = 'builtin'
-        CherryPyWSGIServer.ssl_adapter = BuiltinSSLAdapter(
+        WSGIServer.ssl_adapter = BuiltinSSLAdapter(
             cert,
             key,
             cacert)
